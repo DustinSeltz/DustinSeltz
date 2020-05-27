@@ -57,7 +57,7 @@ var g = svg.append("g")
     .attr("class", "key")
     .attr("transform", "translate(0,40)");
 
-//TODO so this is the legend, right? Coloring it. WIll need to stick this in a function and re-generate it with new color
+//TODO so this is the legend, right? Coloring it. Will need to stick this in a function and re-generate it with new color, or access its pieces and recolor them.
 g.selectAll("rect")
   .data(color1.range().map(function(d) {
       d = color1.invertExtent(d);
@@ -105,6 +105,9 @@ var nextColorScheme = color2;
 var tractsVisible = false;
 
 //Based on scatterplot function which was based on book
+//TODO tooltip gets very laggy when tract boundaries are being viewed. 
+//  Also, mousing over the boundy lines doesn't make the tooltip. 
+//  Annoying but I don't see any easy fix. 
 function displayTooltip(d){
     //Update the tooltip position
     d3.select("#tooltip")
@@ -298,6 +301,8 @@ d3.json(inputFileName).then(function(data) {
     
     
     //TODO is this even needed? Counties just draws over it ?
+    /*
+    //Draws state
     svg.append("g")
         .selectAll("path")
         //.data(topojson.feature(data, data.objects.tracts).features) //TODO what is 'tracts'?
@@ -306,6 +311,7 @@ d3.json(inputFileName).then(function(data) {
             .attr("fill", function(d) { console.log("g d=", d); return "#C0C0C0"})//TODO this probably doesn't matter at all? We need to color counties separate from the state
             //.attr("fill", function(d) { console.log("Filling d=",d, "\ndensity=", d.properties.density, " with ", color(d.properties.density)); return color(d.properties.density); })
             .attr("d", path);
+    */
     
     //Button to switch color schemes
     //TODO probably position it just below the legend? And put text in it. 
