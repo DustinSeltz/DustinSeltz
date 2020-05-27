@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html> 
+  <head>
+    <!-- Meta Tag -->
+    <meta charset="utf-8">
+    <title>D3 Michigan map</title>
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" type="text/css" href="MIPopDensity.css">
+    <!-- <link rel="stylesheet" type="text/css" href="scatterstylesheet.css"> -->
+    <!-- D3.js Source -->
+    <script type= "text/javascript" src="http://d3js.org/d3.v5.min.js"></script>    
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <!-- Looks like v2 and v3 both work fine -->
+    <script src="https://d3js.org/topojson.v3.min.js"></script>   
+  </head>
+  <body>
+    <h1 style = "text-align:center; color:steelblue"><bold>Michigan Population Density, 2019</bold></h1>
+    <!--TODO fix up tooltip-->
+    
+    <div id="tooltip" class="hidden">
+        <strong><p style="text-align: center" id="tooltip_county">County Name</p></strong>
+        <!-- https://www.sitepoint.com/community/t/left-center-and-right-align-on-a-single-line/5277 -->
+        <div>
+            <p style="float: left; width: 35%; text-align: left;">Population</p>
+            <p style="float: left; width: 5%; text-align: center;">:</p>
+            <p style="float: left; width: 60%; text-align: right;"><span id="tooltip_population">Null</span> people</span></p>
+        </div>
+        <div>
+            <p style="float: left; width: 35%; text-align: left;">Area</p>
+            <p style="float: left; width: 5%; text-align: center;">:</p>
+            <p style="float: left; width: 60%; text-align: right;"><span id="tooltip_area">Null</span> SQM</span></p>
+        </div>
+        <div>
+            <p style="float: left; width: 35%; text-align: left;">Density</p>
+            <p style="float: left; width: 5%; text-align: center;">:</p>
+            <p style="float: left; width: 60%; text-align: right;"><span id="tooltip_density">Null</span> p/SQM</span></p>
+        </div>
+    </div>
+      
+    <script type="text/javascript" src="MIPopDensity.js"></script>
+      <h4>Source links TODO</h4>
+      <h4>GitHub link TODO</h4>
+      <h4>Dustin Seltz</h4>
+      <h4>Instructor: Suresh Lodha</h4>
+      <h4>CSE 163: Data programming for Visualization</h4>
+      <h4>Spring 2020</h4>
+      <!-- Used links with FIPS like https://www.census.gov/quickfacts/fact/table/26001/  to get data for each county-->
+      <p><a href="https://www.census.gov/quickfacts/fact/table/">Data sourced from census.gov</a>, map is displaying the 2019 population estimate.</p>
+  </body>
+</html>
