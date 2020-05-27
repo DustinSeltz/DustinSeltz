@@ -40,9 +40,13 @@ var path = d3.geoPath()
 
 
 //TODO currently the color function and legend are just copied from the California example. 
-var color = d3.scaleThreshold()
+var color1 = d3.scaleThreshold()
     .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
     .range(d3.schemeOrRd[9]);
+//TODO make the scheme with different domain. 
+var color2 = d3.scaleThreshold()
+    .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
+    .range(d3.schemeBuPu[9]);
 
 var x = d3.scaleSqrt()
     .domain([0, 4500])
@@ -52,9 +56,10 @@ var g = svg.append("g")
     .attr("class", "key")
     .attr("transform", "translate(0,40)");
 
+//TODO so this is the legend, right? Coloring it. WIll need to stick this in a function and re-generate it with new color
 g.selectAll("rect")
-  .data(color.range().map(function(d) {
-      d = color.invertExtent(d);
+  .data(color1.range().map(function(d) {
+      d = color1.invertExtent(d);
       if (d[0] == null) d[0] = x.domain()[0];
       if (d[1] == null) d[1] = x.domain()[1];
       return d;
@@ -63,7 +68,7 @@ g.selectAll("rect")
     .attr("height", 8)
     .attr("x", function(d) { return x(d[0]); })
     .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-    .attr("fill", function(d) { return color(d[0]); });
+    .attr("fill", function(d) { return color1(d[0]); });
 
 g.append("text")
     .attr("class", "caption")
@@ -76,7 +81,7 @@ g.append("text")
 
 g.call(d3.axisBottom(x)
     .tickSize(13)
-    .tickValues(color.domain()))
+    .tickValues(color1.domain()))
   .select(".domain")
     .remove();
 
@@ -95,6 +100,7 @@ function getSource(data){
 
 //We're going to have to use the data after the function ends. Can just store it globally for now
 var MIdata;
+var nextColorScheme = color2;
 
 //Based on scatterplot function which was based on book
 function displayTooltip(d){
@@ -156,7 +162,7 @@ function displayTooltip(d){
 }
 
 //TODO support a different color scheme. As a parameter toggle, or take the color function or something. 
-function drawCounties(data){
+function drawCounties(data, color){
     //From the California map, https://bl.ocks.org/mbostock/5562380
     svg.append("g")
         .selectAll("path")
@@ -262,8 +268,34 @@ d3.json(inputFileName).then(function(data) {
             //.attr("fill", function(d) { console.log("Filling d=",d, "\ndensity=", d.properties.density, " with ", color(d.properties.density)); return color(d.properties.density); })
             .attr("d", path);
     
+    //Button to switch color schemes
+    //TODO probably position it just below the legend? And put text in it. 
+    var schemeButtonWidth = 40;
+    var schemeButtonHeight = 30;
+    svg.append("g")
+        //.attr("class", "schemeButton")
+        .append("rect")
+        .attr("x", width-schemeButtonWidth)
+        .attr("y", height-schemeButtonHeight)
+        .attr("width", schemeButtonWidth)
+        .attr("height", schemeButtonHeight)
+        .style("fill", "#C0C0C0C0")
+        .on("click", function() {
+            console.log("Changing scheme");
+            drawCounties(data, nextColorScheme);
+            //We're toggling between two schemes, invert. 
+            if(nextColorScheme === color1){
+                nextColorScheme = color2;
+            } else {
+                nextColorScheme = color1;
+            }
+            //TODO we really should remove the old one. Currently they just stack on top.
+        })
+    ;
+    
+    
     //We'll need this data later for recoloring, etc
     MIdata = data;
     
-    drawCounties(data);
+    drawCounties(data, color1);
 });
