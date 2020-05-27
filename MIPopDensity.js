@@ -247,6 +247,25 @@ function drawTracts(data){
         .attr("d", path);
 }
 
+function toggleColorScheme(){
+    console.log("Changing scheme");
+    //Create new ones of the correct color
+    //drawCounties(data, nextColorScheme);
+    //Na, just update their colors
+    var elems = document.getElementsByClassName('county');
+    for(let i = 0; i < elems.length; ++i){
+        let county = elems[i];
+        county.style.fill = nextColorScheme(county.getAttribute("value"));
+    }
+    //We're toggling between two schemes, invert. 
+    if(nextColorScheme === color1){
+        nextColorScheme = color2;
+    } else {
+        nextColorScheme = color1;
+    }
+    //TODO we really should remove the old one. Currently they just stack on top.
+        
+}
 
 var inputFileName = "MI.json";
 d3.json(inputFileName).then(function(data) {
@@ -299,19 +318,20 @@ d3.json(inputFileName).then(function(data) {
     projection.fitExtent([ [ 0, 0 ], [ width, height ] ], topojson.feature(data, data.objects.states));
     
     
-    
-    //TODO is this even needed? Counties just draws over it ?
-    /*
     //Draws state
     svg.append("g")
         .selectAll("path")
         //.data(topojson.feature(data, data.objects.tracts).features) //TODO what is 'tracts'?
         .data(topojson.feature(data, data.objects.states).features) //TODO equivalent?
         .enter().append("path")
-            .attr("fill", function(d) { console.log("g d=", d); return "#C0C0C0"})//TODO this probably doesn't matter at all? We need to color counties separate from the state
-            //.attr("fill", function(d) { console.log("Filling d=",d, "\ndensity=", d.properties.density, " with ", color(d.properties.density)); return color(d.properties.density); })
-            .attr("d", path);
-    */
+            .attr("fill", function(d) { console.log("g d=", d); return "#C0C0C0"})//Assuming the counties draw, this shouldn't matter at all, it's just covered
+            .attr("d", path)
+            .attr("stroke", "#000")
+            .attr("stroke-width", 5)
+            .attr("stroke-opacity", 1)
+            .attr("class", "state_boundary")
+    ;
+    
     
     //Button to switch color schemes
     //TODO probably position it just below the legend? And put text in it. 
@@ -326,24 +346,21 @@ d3.json(inputFileName).then(function(data) {
         .attr("height", schemeButtonHeight)
         .style("fill", "#C0C0C0C0")
         .on("click", function() {
-            console.log("Changing scheme");
-            //Create new ones of the correct color
-            //drawCounties(data, nextColorScheme);
-            //Na, just update their colors
-            var elems = document.getElementsByClassName('county');
-            for(let i = 0; i < elems.length; ++i){
-                let county = elems[i];
-                county.style.fill = nextColorScheme(county.getAttribute("value"));
-            }
-            //We're toggling between two schemes, invert. 
-            if(nextColorScheme === color1){
-                nextColorScheme = color2;
-            } else {
-                nextColorScheme = color1;
-            }
-            //TODO we really should remove the old one. Currently they just stack on top.
+            toggleColorScheme()
         })
     ;
+    //Text for the previous button
+    svg.append("text")
+        .text("Toggle color")
+        //Draw at the legend's x TODO
+        .attr("x", width-schemeButtonWidth)
+        //But down a bit depending on legend's height TODO
+        .attr("y", height-schemeButtonHeight)//function(d) {return +(d3.select("#circle3ec").attr("cy"))+textPadding;});
+        .on("click", function() {
+            toggleColorScheme()
+        })
+    
+    
     var buttonPadding = 10;
     
     //Button to switch toggle tracts
@@ -379,14 +396,13 @@ d3.json(inputFileName).then(function(data) {
     ;
     
     
-    //We'll need this data later for recoloring, etc
+    //We'll need this data later for tooltip, etc
     MIdata = data;
     
-    //drawCounties(data, color2);
     drawCounties(data, color1);
 });
 
-
+//Census tract boundaries
 var tractInputFileName = "tl_2016_26_tract_topo.json";
 d3.json(tractInputFileName).then(function(data) {
     console.log("Tracts: ", data);
