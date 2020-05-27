@@ -43,7 +43,7 @@ var path = d3.geoPath()
 var color1 = d3.scaleThreshold()
     .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
     .range(d3.schemeOrRd[9]);
-//TODO make the scheme with different domain. 
+//TODO make the scheme with different domain. Possibly threshold based on number of data points for each bin.
 var color2 = d3.scaleThreshold()
     .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
     .range(d3.schemeBuPu[9]);
@@ -161,7 +161,7 @@ function displayTooltip(d){
     d3.select("#tooltip").classed("hidden", false);
 }
 
-//TODO support a different color scheme. As a parameter toggle, or take the color function or something. 
+//
 function drawCounties(data, color){
     //From the California map, https://bl.ocks.org/mbostock/5562380
     svg.append("g")
@@ -206,11 +206,22 @@ function drawCounties(data, color){
     ;
 }
 
+function drawTracts(data){
+    //Similar to the CApopDensity example
+    svg.append("path")
+        .datum(topojson.feature(data, data.objects.tl_2016_26_tract))
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("stroke-opacity", 0.3)
+        .attr("d", path);
+}
+
 
 var inputFileName = "MI.json";
 d3.json(inputFileName).then(function(data) {
     console.log("Read data:", data);
     
+    //TODO I'm already adding data to the json to produce MI.json, I could just modify that script to remove this stuff.
     //Remove all non-michigan states
     var michiganFIPS = 26;
     var michigan = {};
@@ -298,4 +309,11 @@ d3.json(inputFileName).then(function(data) {
     MIdata = data;
     
     drawCounties(data, color1);
+});
+
+
+var tractInputFileName = "tl_2016_26_tract_topo.json";
+d3.json(tractInputFileName).then(function(data) {
+    console.log("Tracts: ", data);
+    drawTracts(data);
 });
