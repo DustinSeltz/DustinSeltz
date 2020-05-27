@@ -327,7 +327,7 @@ d3.json(inputFileName).then(function(data) {
             .attr("fill", function(d) { console.log("g d=", d); return "#C0C0C0"})//Assuming the counties draw, this shouldn't matter at all, it's just covered
             .attr("d", path)
             .attr("stroke", "#000")
-            .attr("stroke-width", 5)
+            .attr("stroke-width", 3)
             .attr("stroke-opacity", 1)
             .attr("class", "state_boundary")
     ;
