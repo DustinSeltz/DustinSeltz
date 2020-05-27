@@ -5,8 +5,8 @@
 /*global topojson */
 
 
-//Based on Assignment 8, scatterplot and CApopDensityD3V4 example / https://bl.ocks.org/mbostock/5562380
-//Also uses other examples as mentioned throughout the code TODO
+//Based on Assignment 8, scatterplot, as well as CApopDensityD3V4 example / https://bl.ocks.org/mbostock/5562380
+//Uses of other code is commented
 
 //Define Margin
 var margin = {left: 80, right: 80, top: 50, bottom: 50 }, 
@@ -92,17 +92,9 @@ function getSource(data){
     //return sourceUrl;
     return "["+countyFips+"]";
 }
-var inputFileName = "MI.json";//"us-10m.json";
-//d3.json("ca-topo.json", function(error, topology) {
-//d3.csv(inputFileName, type).then(function(data) {
-//TODO http://127.0.0.1:61842/Assignment10/MichiganPopDensity.html
+var inputFileName = "MI.json";
 d3.json(inputFileName).then(function(data) {
-    
     console.log("Read data:", data);
-    
-    //var topojson = ;
-    //TODO
-    //var topology = topojson.topology({foo: geojson});
     
     //Remove all non-michigan states
     var michiganFIPS = 26;
@@ -144,41 +136,7 @@ d3.json(inputFileName).then(function(data) {
     console.log("Michigan: ", data);
     //Print out a list of FIPS for Michigan's counties for querying in Python
     console.log("County FIPS: ", getSource(data));
-    /*
-    //Read data that was scraped with Python and integrate it into our dataset. 
-    var dataFileName = "MichiganCountyData.csv";
-    //Just store like a dict?
-    //var counties = {};
-    //...or an array?
-    var counties = [];
-    //TODO this isn't very efficient way to join. 
-    //  Currently I think they're actually ordered in the same way in both datasets, but I don't want to rely on that
-    //TODO okay, this is going row by row, but I could use .then to do the whole dataset? That might work nicer with async, can just nest ...
-    var task = d3.csv(dataFileName, function(countyData) {
-        //console.log("County data strings:", countyData);
-        //TODO a types function might be better
-        countyData.FIPS = parseInt(countyData.FIPS);
-        countyData["Population est 2019"] = parseInt(countyData["Population est 2019"]);
-        countyData.Area = parseFloat(countyData.Area);
-        //console.log("County data parsed:", countyData);
-        
-        for(let i = 0; i < data.objects.counties.geometries.length; ++i){
-            if(data.objects.counties.geometries[i].id == countyData.FIPS){
-                data.objects.counties.geometries[i].countyData = countyData;
-                break;
-            }
-        }
-        
-        //Like a dict, should work? Don't need to join datasets completely, geo isn't needed for this
-        //counties[countyData.FIPS] = countyData;
-        counties.push(countyData);
-    });
-    //TODO need to delay until the file is read.
-    console.log(typeof(task), task);
-    task.await();
     
-    console.log("With county data added: ", data);
-    */
     //Starter code calls it topology TODO cleanup
     var topology = data;
     //Relies on topojson, <script src="https://d3js.org/topojson.v3.min.js"></script>
@@ -187,8 +145,6 @@ d3.json(inputFileName).then(function(data) {
     
     
     //Based on scatterplot function which was based on book
-    //TODO fix up
-    
     function displayTooltip(d){
         //Update the tooltip position
         d3.select("#tooltip")
@@ -196,8 +152,7 @@ d3.json(inputFileName).then(function(data) {
             .style("left", (d3.event.pageX) + "px")
             .style("top", (d3.event.pageY) + "px");
         
-        
-        //Unfortunately, it seems like the data isn't in d. TODO fix this somewhere else, this can't be efficient
+        //Unfortunately, it seems like the data isn't in d. TODO fix this somewhere else, this isn't efficient
         //Get data by FIPS id, since the d parameter we have isn't all the data we need
         let id = parseInt(d.id);
         let geoCountyData = {};
@@ -248,6 +203,7 @@ d3.json(inputFileName).then(function(data) {
         d3.select("#tooltip").classed("hidden", false);
     }
     
+    //TODO is this even needed? Counties just draws over it ?
     svg.append("g")
         .selectAll("path")
         //.data(topojson.feature(topology, topology.objects.tracts).features) //TODO what is 'tracts'?
@@ -257,52 +213,6 @@ d3.json(inputFileName).then(function(data) {
             //.attr("fill", function(d) { console.log("Filling d=",d, "\ndensity=", d.properties.density, " with ", color(d.properties.density)); return color(d.properties.density); })
             .attr("d", path);
     
-    ////svg.append("path") //TODO this should be g, not path, right?
-    //svg.append("g")
-        //.datum(topojson.feature(topology, topology.objects.counties)) //so .features does it for each separate county, but doesn't let me fill them?
-        //.attr("fill", function(d) { console.log("Test:", d); return "white";})
-        
-        ////.data(topojson.feature(topology, topology.objects.counties).features)
-        //.join("path")
-            ////.attr("fill", function(d) { console.log("Test:", d); return "white";})
-            //.attr("d", path);
-        
-        /*.enter().append("path")
-            .attr("fill", "white")
-            //.attr("fill", function(d) { console.log("Test:", d); return "white";})
-            .attr("fill", function(d) { 
-                return "white";
-                let id = parseInt(d.id);
-                
-                let geoCountyData = {};
-                for(let i = 0; i < data.objects.counties.geometries.length; ++i){
-                    if(data.objects.counties.geometries[i].id == id){
-                        geoCountyData = data.objects.counties.geometries[i];
-                        console.log("Matched data: ", data.objects.counties.geometries[i]);
-                        break;
-                    }
-                }
-                let countyName = geoCountyData["County Name"]; //TODO this'll be needed for tooltip
-                let countyPop = geoCountyData["Population est 2019"];
-                let countyArea = geoCountyData["Area"];
-                //let density = countyData["Population est 2019"] / countyData["Area"];
-                let density = countyPop / countyArea;
-                console.log("\ndensity=", density, " with ", color(density));
-                return color(density); 
-            })*/
-            
-            ////.attr("stroke", "#000")
-            ////.attr("stroke-opacity", 0.3)
-            ////.attr("d", path);
-    /*
-    //Colors one county
-    svg.append("path")
-        .data(topojson.feature(topology, topology.objects.counties).features)
-        .attr("fill", function(d) { console.log("Test:", d); return "white";})
-        .attr("stroke", "#000")
-        .attr("stroke-opacity", 0.3)
-        .attr("d", path);
-    */
     //From the California map, https://bl.ocks.org/mbostock/5562380
     svg.append("g")
         .selectAll("path")
