@@ -188,7 +188,6 @@ function drawCounties(data, color){
                 let countyName = geoCountyData["County name"];
                 let countyPop = geoCountyData["Population est 2019"];
                 let countyArea = geoCountyData["Area"];
-                //let density = countyData["Population est 2019"] / countyData["Area"];
                 let density = countyPop / countyArea;
                 console.log(countyName, "density=", density, " with ", color(density));
                 return color(density); 
@@ -196,7 +195,33 @@ function drawCounties(data, color){
             .attr("d", path)
             .attr("stroke", "#000")
             .attr("stroke-opacity", 0.3)
-            .attr("d", path)
+            .attr("class", "county")
+            //Density for now, value that turns into color
+            .attr("value", function(d) {
+                //TODO copied code from above, stick it in a function or something. 
+                let id = parseInt(d.id);
+                let geoCountyData = {};
+                for(let i = 0; i < data.objects.counties.geometries.length; ++i){
+                    if(data.objects.counties.geometries[i].id == id){
+                        geoCountyData = data.objects.counties.geometries[i];
+                        //console.log("Matched data: ", data.objects.counties.geometries[i]);
+                        break;
+                    }
+                }
+                let countyPop = geoCountyData["Population est 2019"];
+                let countyArea = geoCountyData["Area"];
+                let density = countyPop / countyArea;
+                return density;
+            })
+            /*
+            .attr("class", function(d){
+                if(colors === color1){
+                    return "countyColor1";
+                } else {
+                    return "countyColor2";
+                }
+            })
+            */
             //Tooltip, based on my scatterplot code, which was based on the book.
             .on("mouseover", function(d){displayTooltip(d);})
             //Moving your mouse around moves the tooltip as well, looks a bit nicer. 
@@ -296,7 +321,14 @@ d3.json(inputFileName).then(function(data) {
         .style("fill", "#C0C0C0C0")
         .on("click", function() {
             console.log("Changing scheme");
-            drawCounties(data, nextColorScheme);
+            //Create new ones of the correct color
+            //drawCounties(data, nextColorScheme);
+            //Na, just update their colors
+            var elems = document.getElementsByClassName('county');
+            for(let i = 0; i < elems.length; ++i){
+                let county = elems[i];
+                county.style.fill = nextColorScheme(county.getAttribute("value"));
+            }
             //We're toggling between two schemes, invert. 
             if(nextColorScheme === color1){
                 nextColorScheme = color2;
@@ -331,6 +363,9 @@ d3.json(inputFileName).then(function(data) {
             } else {
                 for(let i = 0; i < elems.length; ++i){
                     elems[i].style.visibility = 'visible';
+                    //Lets make sure these lines show on top
+                    //That's not working, newly created stuff displays on top. Maybe just toggle visibility for those as well. 
+                    //elems[i].style["z-index"] = 100;
                 }
             }
             tractsVisible = !tractsVisible;
@@ -341,6 +376,7 @@ d3.json(inputFileName).then(function(data) {
     //We'll need this data later for recoloring, etc
     MIdata = data;
     
+    //drawCounties(data, color2);
     drawCounties(data, color1);
 });
 
