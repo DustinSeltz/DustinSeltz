@@ -92,6 +92,115 @@ function getSource(data){
     //return sourceUrl;
     return "["+countyFips+"]";
 }
+
+//We're going to have to use the data after the function ends. Can just store it globally for now
+var MIdata;
+
+//Based on scatterplot function which was based on book
+function displayTooltip(d){
+    //Update the tooltip position
+    d3.select("#tooltip")
+        //https://bl.ocks.org/d3noob/a22c42db65eb00d4e369
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY) + "px");
+
+    //Unfortunately, it seems like the data isn't in d. TODO fix this somewhere else, this isn't efficient
+    //Get data by FIPS id, since the d parameter we have isn't all the data we need
+    let id = parseInt(d.id);
+    let geoCountyData = {};
+    for(let i = 0; i < MIdata.objects.counties.geometries.length; ++i){
+        if(MIdata.objects.counties.geometries[i].id == id){
+            geoCountyData = MIdata.objects.counties.geometries[i];
+            //console.log("Matched data: ", data.objects.counties.geometries[i]);
+            break;
+        }
+    }
+    let countyName = geoCountyData["County name"]
+    let countyPop = geoCountyData["Population est 2019"];
+    let countyArea = geoCountyData["Area"];
+    let density = countyPop / countyArea;
+
+    //Round to two digits. I can find where the . is and then go at most a number of characters afterwards
+    //TODO maybe stick this in a function
+    let digitsAfterDecimal = 2;
+    let decimalChar = '.';
+    density = String(density);
+    //The starting value of periodIndex just needs to be small enough that it won't trigger the conditional
+    for(let i = 0, periodIndex = 0-digitsAfterDecimal-1; i < density.length; ++i){
+        if(density[i] === decimalChar){
+             periodIndex = i;
+        }
+        if(i === periodIndex + digitsAfterDecimal){
+            //console.log("Density unrounded was ", density);
+            density = density.slice(0, i+1);
+            //console.log("Density is now ", density);
+            break;
+        }
+    }
+
+    //Set values
+    d3.select("#tooltip")
+        .select("#tooltip_county")
+        .text(countyName);
+    d3.select("#tooltip")
+        .select("#tooltip_population")
+        .text(countyPop);
+    d3.select("#tooltip")
+        .select("#tooltip_area")
+        .text(countyArea)
+    d3.select("#tooltip")
+        .select("#tooltip_density")
+        .text(density);
+    //Show the tooltip
+    d3.select("#tooltip").classed("hidden", false);
+}
+
+//TODO support a different color scheme. As a parameter toggle, or take the color function or something. 
+function drawCounties(data){
+    //From the California map, https://bl.ocks.org/mbostock/5562380
+    svg.append("g")
+        .selectAll("path")
+        .data(topojson.feature(data, data.objects.counties).features)
+        .enter().append("path")
+            //.attr("fill", function(d) { console.log("Test:", d); return "blue";})
+            .attr("fill", function(d) {
+                //Showing it in white lets us see boundaries between counties easily. Looks like the borders are displaying well. 
+                //return "white";
+                //TODO this shares some code with the tooltip function, should probably put this in a function. Or fix the data so it's unneeded
+                //Get data by FIPS id, since the d parameter we have isn't all the data we need
+                let id = parseInt(d.id);
+                let geoCountyData = {};
+                for(let i = 0; i < data.objects.counties.geometries.length; ++i){
+                    if(data.objects.counties.geometries[i].id == id){
+                        geoCountyData = data.objects.counties.geometries[i];
+                        //console.log("Matched data: ", data.objects.counties.geometries[i]);
+                        break;
+                    }
+                }
+                let countyName = geoCountyData["County name"];
+                let countyPop = geoCountyData["Population est 2019"];
+                let countyArea = geoCountyData["Area"];
+                //let density = countyData["Population est 2019"] / countyData["Area"];
+                let density = countyPop / countyArea;
+                console.log(countyName, "density=", density, " with ", color(density));
+                return color(density); 
+            })
+            .attr("d", path)
+            .attr("stroke", "#000")
+            .attr("stroke-opacity", 0.3)
+            .attr("d", path)
+            //Tooltip, based on my scatterplot code, which was based on the book.
+            .on("mouseover", function(d){displayTooltip(d);})
+            //Moving your mouse around moves the tooltip as well, looks a bit nicer. 
+            .on("mousemove", function(d){displayTooltip(d);})
+            //Hides again when you mouse off of the circle. 
+            .on("mouseout", function() {
+                d3.select("#tooltip").classed("hidden", true);
+            })
+    ;
+}
+
+
 var inputFileName = "MI.json";
 d3.json(inputFileName).then(function(data) {
     console.log("Read data:", data);
@@ -137,121 +246,24 @@ d3.json(inputFileName).then(function(data) {
     //Print out a list of FIPS for Michigan's counties for querying in Python
     console.log("County FIPS: ", getSource(data));
     
-    //Starter code calls it topology TODO cleanup
-    var topology = data;
     //Relies on topojson, <script src="https://d3js.org/topojson.v3.min.js"></script>
     //Sizes the display based on the data and the space we have to display it
-    projection.fitExtent([ [ 0, 0 ], [ width, height ] ], topojson.feature(topology, topology.objects.states));
+    projection.fitExtent([ [ 0, 0 ], [ width, height ] ], topojson.feature(data, data.objects.states));
     
     
-    //Based on scatterplot function which was based on book
-    function displayTooltip(d){
-        //Update the tooltip position
-        d3.select("#tooltip")
-            //https://bl.ocks.org/d3noob/a22c42db65eb00d4e369
-            .style("left", (d3.event.pageX) + "px")
-            .style("top", (d3.event.pageY) + "px");
-        
-        //Unfortunately, it seems like the data isn't in d. TODO fix this somewhere else, this isn't efficient
-        //Get data by FIPS id, since the d parameter we have isn't all the data we need
-        let id = parseInt(d.id);
-        let geoCountyData = {};
-        for(let i = 0; i < data.objects.counties.geometries.length; ++i){
-            if(data.objects.counties.geometries[i].id == id){
-                geoCountyData = data.objects.counties.geometries[i];
-                //console.log("Matched data: ", data.objects.counties.geometries[i]);
-                break;
-            }
-        }
-        let countyName = geoCountyData["County name"]
-        let countyPop = geoCountyData["Population est 2019"];
-        let countyArea = geoCountyData["Area"];
-        let density = countyPop / countyArea;
-        
-        //Round to two digits. I can find where the . is and then go at most a number of characters afterwards
-        //TODO maybe stick this in a function
-        let digitsAfterDecimal = 2;
-        let decimalChar = '.';
-        density = String(density);
-        //The starting value of periodIndex just needs to be small enough that it won't trigger the conditional
-        for(let i = 0, periodIndex = 0-digitsAfterDecimal-1; i < density.length; ++i){
-            if(density[i] === decimalChar){
-                 periodIndex = i;
-            }
-            if(i === periodIndex + digitsAfterDecimal){
-                //console.log("Density unrounded was ", density);
-                density = density.slice(0, i+1);
-                //console.log("Density is now ", density);
-                break;
-            }
-        }
-        
-        //Set values
-        d3.select("#tooltip")
-            .select("#tooltip_county")
-            .text(countyName);
-        d3.select("#tooltip")
-            .select("#tooltip_population")
-            .text(countyPop);
-        d3.select("#tooltip")
-            .select("#tooltip_area")
-            .text(countyArea)
-        d3.select("#tooltip")
-            .select("#tooltip_density")
-            .text(density);
-        //Show the tooltip
-        d3.select("#tooltip").classed("hidden", false);
-    }
     
     //TODO is this even needed? Counties just draws over it ?
     svg.append("g")
         .selectAll("path")
-        //.data(topojson.feature(topology, topology.objects.tracts).features) //TODO what is 'tracts'?
-        .data(topojson.feature(topology, topology.objects.states).features) //TODO equivalent?
+        //.data(topojson.feature(data, data.objects.tracts).features) //TODO what is 'tracts'?
+        .data(topojson.feature(data, data.objects.states).features) //TODO equivalent?
         .enter().append("path")
             .attr("fill", function(d) { console.log("g d=", d); return "#C0C0C0"})//TODO this probably doesn't matter at all? We need to color counties separate from the state
             //.attr("fill", function(d) { console.log("Filling d=",d, "\ndensity=", d.properties.density, " with ", color(d.properties.density)); return color(d.properties.density); })
             .attr("d", path);
     
-    //From the California map, https://bl.ocks.org/mbostock/5562380
-    svg.append("g")
-        .selectAll("path")
-        .data(topojson.feature(topology, topology.objects.counties).features)
-        .enter().append("path")
-            //.attr("fill", function(d) { console.log("Test:", d); return "blue";})
-            .attr("fill", function(d) {
-                //Showing it in white lets us see boundaries between counties easily. Looks like the borders are displaying well. 
-                //return "white";
-                //TODO this shares some code with the tooltip function, should probably put this in a function. Or fix the data so it's unneeded
-                //Get data by FIPS id, since the d parameter we have isn't all the data we need
-                let id = parseInt(d.id);
-                let geoCountyData = {};
-                for(let i = 0; i < data.objects.counties.geometries.length; ++i){
-                    if(data.objects.counties.geometries[i].id == id){
-                        geoCountyData = data.objects.counties.geometries[i];
-                        //console.log("Matched data: ", data.objects.counties.geometries[i]);
-                        break;
-                    }
-                }
-                let countyName = geoCountyData["County name"];
-                let countyPop = geoCountyData["Population est 2019"];
-                let countyArea = geoCountyData["Area"];
-                //let density = countyData["Population est 2019"] / countyData["Area"];
-                let density = countyPop / countyArea;
-                console.log(countyName, "density=", density, " with ", color(density));
-                return color(density); 
-            })
-            .attr("d", path)
-            .attr("stroke", "#000")
-            .attr("stroke-opacity", 0.3)
-            .attr("d", path)
-            //Tooltip, based on my scatterplot code, which was based on the book.
-            .on("mouseover", function(d){displayTooltip(d);})
-            //Moving your mouse around moves the tooltip as well, looks a bit nicer. 
-            .on("mousemove", function(d){displayTooltip(d);})
-            //Hides again when you mouse off of the circle. 
-            .on("mouseout", function() {
-                d3.select("#tooltip").classed("hidden", true);
-            })
-    ;
+    //We'll need this data later for recoloring, etc
+    MIdata = data;
+    
+    drawCounties(data);
 });
