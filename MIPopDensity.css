@@ -1,3 +1,7 @@
+.tract {
+    visibility: hidden;
+}
+
 
 /*Based on book example, "HTML div Tooltips" and my scatterplot code*/
 #tooltip {

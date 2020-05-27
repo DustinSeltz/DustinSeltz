@@ -8,10 +8,11 @@
 //Based on Assignment 8, scatterplot, as well as CApopDensityD3V4 example / https://bl.ocks.org/mbostock/5562380
 //Uses of other code is commented
 
+//TODO size width and height based on window size instead of raw pixels?
 //Define Margin
 var margin = {left: 80, right: 80, top: 50, bottom: 50 }, 
     width = 960 - margin.left -margin.right,
-    height = 500 - margin.top - margin.bottom;
+    height = 800 - margin.top - margin.bottom;
 
 //Define SVG
 var svg = d3.select("body")
@@ -101,6 +102,7 @@ function getSource(data){
 //We're going to have to use the data after the function ends. Can just store it globally for now
 var MIdata;
 var nextColorScheme = color2;
+var tractsVisible = false;
 
 //Based on scatterplot function which was based on book
 function displayTooltip(d){
@@ -213,6 +215,7 @@ function drawTracts(data){
         .attr("fill", "none")
         .attr("stroke", "#000")
         .attr("stroke-opacity", 0.3)
+        .attr("class", "tract")
         .attr("d", path);
 }
 
@@ -301,6 +304,36 @@ d3.json(inputFileName).then(function(data) {
                 nextColorScheme = color1;
             }
             //TODO we really should remove the old one. Currently they just stack on top.
+        })
+    ;
+    var buttonPadding = 10;
+    
+    //Button to switch toggle tracts
+    var tractButtonWidth = 40;
+    var tractButtonHeight = 30;
+    svg.append("g")
+        //.attr("class", "tractButton")
+        .append("rect")
+        .attr("x", width-tractButtonWidth)
+        .attr("y", height-tractButtonHeight-schemeButtonHeight-buttonPadding)
+        .attr("width", tractButtonWidth)
+        .attr("height", tractButtonHeight)
+        .style("fill", "#C0C0C0C0")
+        .on("click", function() {
+            console.log("Toggling tract visibility");
+            //Based on https://stackoverflow.com/questions/19353331/getting-or-changing-css-class-property-with-javascript-using-dom-style
+            //TODO is this really the best way to do it? Can I just change the CSS class properties?
+            var elems = document.getElementsByClassName('tract');
+            if(tractsVisible){
+                for(let i = 0; i < elems.length; ++i){
+                    elems[i].style.visibility = 'hidden';
+                }
+            } else {
+                for(let i = 0; i < elems.length; ++i){
+                    elems[i].style.visibility = 'visible';
+                }
+            }
+            tractsVisible = !tractsVisible;
         })
     ;
     
