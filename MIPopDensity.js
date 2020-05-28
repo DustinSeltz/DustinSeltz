@@ -83,17 +83,15 @@ function drawLegend(color){
     }
     
     //This is the legend's ticks, which are dividing the color bar and have number labels
-    let ticks = g.call(d3.axisBottom(x)
+    g.call(d3.axisBottom(x)
         .tickSize(13)
         .tickValues(domain)
     );
-    ticks.select(".domain") //Removes the x axis horizontal line
+    g.select(".domain") //Removes the x axis horizontal line
         .remove();
-    console.log("ticks=", ticks);
-    console.log("ticks text=", ticks.selectAll("text"));
     //Quantile has low values overlapping if the text is horizontal
     if(color === color2){
-        ticks.selectAll("text")
+        g.selectAll("text")
             .attr("transform", "rotate(90)") //Rotate text
             //Shift it down and left a little because rotate puts it off
             //Unfortunately I don't see an easy way to do this dynamically. Eyeballing it.
