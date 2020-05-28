@@ -14,19 +14,12 @@ var margin = {left: 80, right: 80, top: 50, bottom: 50 },
     width = 960 - margin.left -margin.right,
     height = 800 - margin.top - margin.bottom;
 
-//Define SVG
 var svg = d3.select("body")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-/*
-//Define Color 
-//https://stackoverflow.com/questions/40070590/what-is-the-replacement-of-d3-scale-category10-range-in-version-4
-var colors = d3.scaleOrdinal(d3.schemeCategory10);
-// d3-scale-chromatic might work better since we have >10 https://piazza.com/class/k7zfbo276ik5jb?cid=89
-*/
 
 //Based on ch14 example 19
 //Define map projection
@@ -40,14 +33,11 @@ var path = d3.geoPath()
 //https://www.sohamkamani.com/blog/javascript/2019-02-18-d3-geo-projections-explained/
 
 
-//TODO currently the color function and legend are just copied from the California example. 
+//Default color scheme
 var color1 = d3.scaleThreshold()
     .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
     .range(d3.schemeOrRd[9]);
-//TODO make the scheme with different domain. Possibly threshold based on number of data points for each bin.
-//var color2 = d3.scaleThreshold()
-//    .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
-//    .range(d3.schemeBuPu[9]);
+//Alt color scheme using quantile
 var color2;
 
 var x = d3.scaleSqrt()
@@ -127,7 +117,7 @@ function getSource(data){
     return "["+countyFips+"]";
 }
 
-//We're going to have to use the data after the function ends. Can just store it globally for now
+//We're going to have to use the data after the function ends. Can just store it globally.
 var MIdata;
 var nextColorScheme;
 var tractsVisible = false;
@@ -135,7 +125,7 @@ var boundaryVisible = true;
 
 //Based on scatterplot function which was based on book
 //TODO tooltip gets very laggy when tract boundaries are being viewed. 
-//  Also, mousing over the boundy lines doesn't make the tooltip. 
+//  Also, mousing over the boundry lines doesn't make the tooltip. 
 //  Annoying but I don't see any easy fix. 
 function displayTooltip(d){
     //Update the tooltip position
@@ -144,7 +134,8 @@ function displayTooltip(d){
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY) + "px");
 
-    //Unfortunately, it seems like the data isn't in d. TODO fix this somewhere else, this isn't efficient
+    //Unfortunately, it seems like the data isn't in d. 
+    //TODO fix this somewhere else, or at least put this in a function
     //Get data by FIPS id, since the d parameter we have isn't all the data we need
     let id = parseInt(d.id);
     let geoCountyData = {};
@@ -195,17 +186,17 @@ function displayTooltip(d){
     d3.select("#tooltip").classed("hidden", false);
 }
 
-//
+
 function drawCounties(data, color){
     //From the California map, https://bl.ocks.org/mbostock/5562380
     svg.append("g")
         .selectAll("path")
         .data(topojson.feature(data, data.objects.counties).features)
         .enter().append("path")
-            //.attr("fill", function(d) { console.log("Test:", d); return "blue";})
             .attr("fill", function(d) {
                 //Showing it in white lets us see boundaries between counties easily. Looks like the borders are displaying well. 
                 //return "white";
+                
                 //TODO this shares some code with the tooltip function, should probably put this in a function. Or fix the data so it's unneeded
                 //Get data by FIPS id, since the d parameter we have isn't all the data we need
                 let id = parseInt(d.id);
@@ -245,15 +236,6 @@ function drawCounties(data, color){
                 let density = countyPop / countyArea;
                 return density;
             })
-            /*
-            .attr("class", function(d){
-                if(colors === color1){
-                    return "countyColor1";
-                } else {
-                    return "countyColor2";
-                }
-            })
-            */
             //Tooltip, based on my scatterplot code, which was based on the book.
             .on("mouseover", function(d){displayTooltip(d);})
             //Moving your mouse around moves the tooltip as well, looks a bit nicer. 
@@ -311,9 +293,6 @@ function toggleTracts(){
     } else {
         for(let i = 0; i < elems.length; ++i){
             elems[i].style.visibility = 'visible';
-            //Lets make sure these lines show on top
-            //That's not working, newly created stuff displays on top. Maybe just toggle visibility for those as well. 
-            //elems[i].style["z-index"] = 100;
         }
     }
     tractsVisible = !tractsVisible;
@@ -329,18 +308,16 @@ function toggleBoundaries(){
     } else {
         for(let i = 0; i < elems.length; ++i){
             elems[i].style.visibility = 'visible';
-            //Lets make sure these lines show on top
-            //That's not working, newly created stuff displays on top. Maybe just toggle visibility for those as well. 
-            //elems[i].style["z-index"] = 100;
         }
     }
     boundaryVisible = !boundaryVisible;
 }
+
 var inputFileName = "MI.json";
 d3.json(inputFileName).then(function(data) {
     console.log("Read data:", data);
     
-    //TODO I'm already adding data to the json to produce MI.json, I could just modify that script to remove this stuff.
+    //TODO I'm already adding data to the json to produce MI.json, I could just modify that Python script to remove this stuff.
     //Remove all non-michigan states
     var michiganFIPS = 26;
     var michigan = {};
@@ -370,25 +347,13 @@ d3.json(inputFileName).then(function(data) {
     }
     data.objects.counties.geometries = michiganCounties;
     
-    //Remove all non-michigan land/tract data TODO
-    /*var michiganLand = {};
-    
-    for(let i = 0; i < data.objects.land.geometries.length; ++i){
-        if(data.objects.states.geometries[i].id == michiganFIPS){
-            console.log(data.objects.states.geometries[i], data.objects.states.geometries[i].id);
-            michigan = data.objects.states.geometries[i];
-        }
-    }*/
-    //We actually don't have ids in there. Is it by index ? Can't be ?
-    //data.objects.land.geometries = data.objects.land.geometries[michiganFIPS];
-    
     console.log("Michigan: ", data);
-    //Print out a list of FIPS for Michigan's counties for querying in Python
+    //Print out a list of FIPS for Michigan's counties for querying in Python (just copypaste into the notebook's array)
     console.log("County FIPS: ", getSource(data));
     
     //Now that we have the data, we can fit colors to it
-    //Something like https://observablehq.com/@d3/quantile-quantize-and-threshold-scales ?
-    //TODO this works wellish in terms of color, but breaks the legend
+    //Equal number of counties per color used might be interesting
+    //Something like https://observablehq.com/@d3/quantile-quantize-and-threshold-scales
     color2 = d3.scaleQuantile()
         .domain(countyDensity)
         .range(d3.schemeBuPu[9])
@@ -413,10 +378,9 @@ d3.json(inputFileName).then(function(data) {
             .attr("class", "state_boundary")
     ;
     
-    //TODO these buttons could be done elsewhere, right?
+    //TODO these buttons could be done elsewhere, right? Then again, here works.
     
     //Button to switch color schemes
-    //TODO probably position it just below the legend? And put text in it. 
     var schemeButtonWidth = 100;
     var schemeButtonHeight = 30;
     svg.append("rect")
@@ -432,11 +396,16 @@ d3.json(inputFileName).then(function(data) {
         })
     ;
     //Text for the previous button
-    //TODO this isn't well centered. 
+    //TODO this isn't super well centered. 
+    //Simply setting font and height in px to same number doesn't seem to work
+    var fontSize = "16px";
+    //Done by eye
     var textHeight = 12;
     var textPadding = 5;
+    var buttonPadding = 10;
     svg.append("text")
         .text("Toggle Color")
+        .attr("font-size", fontSize)
         //Draw at box's x and y
         .attr("x", function() {return +(d3.select("#schemeButton").attr("x"))+textPadding;})
         .attr("y", function() {return +(d3.select("#schemeButton").attr("y"))+textHeight*1.5;})
@@ -445,7 +414,6 @@ d3.json(inputFileName).then(function(data) {
         })
     ;
     
-    var buttonPadding = 10;
     //Button to switch toggle tracts
     var tractButtonWidth = 220;
     var tractButtonHeight = 30;
@@ -464,6 +432,7 @@ d3.json(inputFileName).then(function(data) {
     //Text for the previous button
     svg.append("text")
         .text("Toggle Census Tract Boundary")
+        .attr("font-size", fontSize)
         //Draw at box's x and y
         .attr("x", function() {return +(d3.select("#tractButton").attr("x"))+textPadding;})
         .attr("y", function() {return +(d3.select("#tractButton").attr("y"))+textHeight*1.5;})
@@ -489,6 +458,7 @@ d3.json(inputFileName).then(function(data) {
     //Text for the previous button
     svg.append("text")
         .text("Toggle State Boundary")
+        .attr("font-size", fontSize)
         //Draw at box's x and y
         .attr("x", function() {return +(d3.select("#boundaryButton").attr("x"))+textPadding;})
         .attr("y", function() {return +(d3.select("#boundaryButton").attr("y"))+textHeight*1.5;})
