@@ -386,7 +386,7 @@ d3.json(inputFileName).then(function(data) {
     
     var buttonPadding = 10;
     //Button to switch toggle tracts
-    var tractButtonWidth = 100;
+    var tractButtonWidth = 230;
     var tractButtonHeight = 30;
     svg.append("rect")
         .attr("id", "tractButton")
@@ -402,7 +402,7 @@ d3.json(inputFileName).then(function(data) {
     ;
     //Text for the previous button
     svg.append("text")
-        .text("Toggle tracts")
+        .text("Toggle Census Tract Boundary")
         //Draw at box's x and y
         .attr("x", function() {return +(d3.select("#tractButton").attr("x"))+textPadding;})
         .attr("y", function() {return +(d3.select("#tractButton").attr("y"))+textHeight*1.5;})
