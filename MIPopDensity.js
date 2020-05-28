@@ -106,6 +106,7 @@ function getSource(data){
 var MIdata;
 var nextColorScheme = color2;
 var tractsVisible = false;
+var boundaryVisible = true;
 
 //Based on scatterplot function which was based on book
 //TODO tooltip gets very laggy when tract boundaries are being viewed. 
@@ -287,7 +288,24 @@ function toggleTracts(){
     }
     tractsVisible = !tractsVisible;
 }
-
+//TODO this is actually just about the same as toggleTracts. Make a separate visibility function and call it with their classes?
+function toggleBoundaries(){
+    console.log("Toggling boundary visibility");
+    var elems = document.getElementsByClassName('state_boundary');
+    if(boundaryVisible){
+        for(let i = 0; i < elems.length; ++i){
+            elems[i].style.visibility = 'hidden';
+        }
+    } else {
+        for(let i = 0; i < elems.length; ++i){
+            elems[i].style.visibility = 'visible';
+            //Lets make sure these lines show on top
+            //That's not working, newly created stuff displays on top. Maybe just toggle visibility for those as well. 
+            //elems[i].style["z-index"] = 100;
+        }
+    }
+    boundaryVisible = !boundaryVisible;
+}
 var inputFileName = "MI.json";
 d3.json(inputFileName).then(function(data) {
     console.log("Read data:", data);
@@ -361,8 +379,9 @@ d3.json(inputFileName).then(function(data) {
     var schemeButtonHeight = 30;
     svg.append("rect")
         .attr("id", "schemeButton")
-        .attr("x", width-schemeButtonWidth)//function(d) {return +(d3.select("#legendArea").attr("x"))+50;})//Legend's g has no x or y attr
-        .attr("y", 0-schemeButtonHeight)//function(d) {return +(d3.select("#legendArea").attr("y"))+50;})//height-schemeButtonHeight)
+        //TODO Strange behavior, it's not reaching the side with just width-schemeButtonWidth
+        .attr("x", width-schemeButtonWidth/5)
+        .attr("y", 0-schemeButtonHeight)
         .attr("width", schemeButtonWidth)
         .attr("height", schemeButtonHeight)
         .style("fill", "#C0C0C0C0")
@@ -386,7 +405,7 @@ d3.json(inputFileName).then(function(data) {
     
     var buttonPadding = 10;
     //Button to switch toggle tracts
-    var tractButtonWidth = 230;
+    var tractButtonWidth = 220;
     var tractButtonHeight = 30;
     svg.append("rect")
         .attr("id", "tractButton")
@@ -408,6 +427,31 @@ d3.json(inputFileName).then(function(data) {
         .attr("y", function() {return +(d3.select("#tractButton").attr("y"))+textHeight*1.5;})
         .on("click", function() {
             toggleTracts();
+        })
+    ;
+    
+    var boundaryButtonWidth = 170;
+    var boundaryButtonHeight = 30;
+    svg.append("rect")
+        .attr("id", "boundaryButton")
+        //Based on the last button
+        .attr("x", function() {return +(d3.select("#tractButton").attr("x"))-boundaryButtonWidth-buttonPadding;})
+        .attr("y", function() {return +(d3.select("#tractButton").attr("y"));})
+        .attr("width", boundaryButtonWidth)
+        .attr("height", boundaryButtonHeight)
+        .style("fill", "#C0C0C0C0")
+        .on("click", function() {
+            toggleBoundaries();
+        })
+    ;
+    //Text for the previous button
+    svg.append("text")
+        .text("Toggle State Boundary")
+        //Draw at box's x and y
+        .attr("x", function() {return +(d3.select("#boundaryButton").attr("x"))+textPadding;})
+        .attr("y", function() {return +(d3.select("#boundaryButton").attr("y"))+textHeight*1.5;})
+        .on("click", function() {
+            toggleBoundaries();
         })
     ;
     
