@@ -45,9 +45,10 @@ var color1 = d3.scaleThreshold()
     .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
     .range(d3.schemeOrRd[9]);
 //TODO make the scheme with different domain. Possibly threshold based on number of data points for each bin.
-var color2 = d3.scaleThreshold()
-    .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
-    .range(d3.schemeBuPu[9]);
+//var color2 = d3.scaleThreshold()
+//    .domain([1, 10, 50, 200, 500, 1000, 2000, 4000])
+//    .range(d3.schemeBuPu[9]);
+var color2;
 
 var x = d3.scaleSqrt()
     .domain([0, 4500])
@@ -58,21 +59,21 @@ function drawLegend(color){
         .attr("class", "key")
         .attr("id", "legendArea")
         .attr("transform", "translate(0,40)");
-
-    //TODO so this is the legend, right? Coloring it. Will need to stick this in a function and re-generate it with new color, or access its pieces and recolor them.
+    
     //This is the colored rectangles of the legend
     g.selectAll("rect")
-        .data(color.range().map(function(d) { //TODO change color
+        .data(color.range().map(function(d) {
             d = color.invertExtent(d);
             if (d[0] == null) d[0] = x.domain()[0];
             if (d[1] == null) d[1] = x.domain()[1];
+            console.log("after:color d=", d);
             return d;
         }))
         .enter().append("rect")
             .attr("height", 8)
             .attr("x", function(d) { return x(d[0]); })
             .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-            .attr("fill", function(d) { return color(d[0]); }); //TODO change color
+            .attr("fill", function(d) { return color(d[0]); });
     //This is the legend's label
     g.append("text")
         .attr("class", "caption")
@@ -82,11 +83,21 @@ function drawLegend(color){
         .attr("text-anchor", "start")
         .attr("font-weight", "bold")
         .text("Population per square mile");
-    //This is the legend's ticks dividing the color bar, as well as the text for each tick
+    
+    //I only want quantile for color2 scheme, not color1. 
+    let domain;
+    if(color===color2){
+        domain = color2.quantiles();
+    } else {
+        domain = color.domain();
+    }
+    
+    //This is the legend's ticks, which are dividing the color bar and have number labels
     g.call(d3.axisBottom(x)
         .tickSize(13)
-        .tickValues(color.domain())) //TODO change color
-      .select(".domain")
+        .tickValues(domain)
+    )
+      .select(".domain") //Removes the x axis horizontal line
         .remove();
 }
 drawLegend(color1);
@@ -106,7 +117,7 @@ function getSource(data){
 
 //We're going to have to use the data after the function ends. Can just store it globally for now
 var MIdata;
-var nextColorScheme = color2;
+var nextColorScheme;
 var tractsVisible = false;
 var boundaryVisible = true;
 
@@ -330,6 +341,8 @@ d3.json(inputFileName).then(function(data) {
     }
     data.objects.states.geometries = [michigan];
     
+    //Keeping track of a list of population will be useful for color2
+    var countyDensity = []
     //Remove all non-michigan county data
     var michiganCounties = [];
     for(let i = 0; i < data.objects.counties.geometries.length; ++i){
@@ -337,6 +350,8 @@ d3.json(inputFileName).then(function(data) {
         if(parseInt((data.objects.counties.geometries[i].id)/1000) == michiganFIPS){
             console.log(parseInt((data.objects.counties.geometries[i].id)/1000));
             michiganCounties.push(data.objects.counties.geometries[i]);
+            let density = data.objects.counties.geometries[i]["Population est 2019"] / data.objects.counties.geometries[i]["Area"];
+            countyDensity.push(density);
             //console.log(data.objects.states.geometries[i]);
             //delete data.objects.counties.geometries[i];
         }
@@ -359,10 +374,19 @@ d3.json(inputFileName).then(function(data) {
     //Print out a list of FIPS for Michigan's counties for querying in Python
     console.log("County FIPS: ", getSource(data));
     
+    //Now that we have the data, we can fit colors to it
+    //Something like https://observablehq.com/@d3/quantile-quantize-and-threshold-scales ?
+    //TODO this works wellish in terms of color, but breaks the legend
+    color2 = d3.scaleQuantile()
+        .domain(countyDensity)
+        .range(d3.schemeBuPu[9])
+    ;
+    
+    nextColorScheme = color2;
+    
     //Relies on topojson, <script src="https://d3js.org/topojson.v3.min.js"></script>
     //Sizes the display based on the data and the space we have to display it
     projection.fitExtent([ [ 0, 0 ], [ width, height ] ], topojson.feature(data, data.objects.states));
-    
     
     //Draws state
     svg.append("g")
