@@ -55,22 +55,24 @@ var x = d3.scaleSqrt()
 
 var g = svg.append("g")
     .attr("class", "key")
+    .attr("id", "legendArea")
     .attr("transform", "translate(0,40)");
 
 //TODO so this is the legend, right? Coloring it. Will need to stick this in a function and re-generate it with new color, or access its pieces and recolor them.
+//This is the colored rectangles of the legend
 g.selectAll("rect")
-  .data(color1.range().map(function(d) {
-      d = color1.invertExtent(d);
-      if (d[0] == null) d[0] = x.domain()[0];
-      if (d[1] == null) d[1] = x.domain()[1];
-      return d;
+    .data(color1.range().map(function(d) { //TODO change color
+        d = color1.invertExtent(d);
+        if (d[0] == null) d[0] = x.domain()[0];
+        if (d[1] == null) d[1] = x.domain()[1];
+        return d;
     }))
-  .enter().append("rect")
-    .attr("height", 8)
-    .attr("x", function(d) { return x(d[0]); })
-    .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-    .attr("fill", function(d) { return color1(d[0]); });
-
+    .enter().append("rect")
+        .attr("height", 8)
+        .attr("x", function(d) { return x(d[0]); })
+        .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+        .attr("fill", function(d) { return color1(d[0]); }); //TODO change color
+//This is the legend's label
 g.append("text")
     .attr("class", "caption")
     .attr("x", x.range()[0])
@@ -79,12 +81,13 @@ g.append("text")
     .attr("text-anchor", "start")
     .attr("font-weight", "bold")
     .text("Population per square mile");
-
+//This is the legend's ticks dividing the color bar, as well as the text for each tick
 g.call(d3.axisBottom(x)
     .tickSize(13)
-    .tickValues(color1.domain()))
+    .tickValues(color1.domain())) //TODO change color
   .select(".domain")
     .remove();
+
 
 //Get list of county FIPS in the data
 function getSource(data){
@@ -263,8 +266,26 @@ function toggleColorScheme(){
     } else {
         nextColorScheme = color1;
     }
-    //TODO we really should remove the old one. Currently they just stack on top.
         
+}
+function toggleTracts(){
+    console.log("Toggling tract visibility");
+    //Based on https://stackoverflow.com/questions/19353331/getting-or-changing-css-class-property-with-javascript-using-dom-style
+    //TODO is this really the best way to do it? Can I just change the CSS class properties?
+    var elems = document.getElementsByClassName('tract');
+    if(tractsVisible){
+        for(let i = 0; i < elems.length; ++i){
+            elems[i].style.visibility = 'hidden';
+        }
+    } else {
+        for(let i = 0; i < elems.length; ++i){
+            elems[i].style.visibility = 'visible';
+            //Lets make sure these lines show on top
+            //That's not working, newly created stuff displays on top. Maybe just toggle visibility for those as well. 
+            //elems[i].style["z-index"] = 100;
+        }
+    }
+    tractsVisible = !tractsVisible;
 }
 
 var inputFileName = "MI.json";
@@ -332,16 +353,16 @@ d3.json(inputFileName).then(function(data) {
             .attr("class", "state_boundary")
     ;
     
+    //TODO these buttons could be done elsewhere, right?
     
     //Button to switch color schemes
     //TODO probably position it just below the legend? And put text in it. 
-    var schemeButtonWidth = 40;
+    var schemeButtonWidth = 100;
     var schemeButtonHeight = 30;
-    svg.append("g")
-        //.attr("class", "schemeButton")
-        .append("rect")
-        .attr("x", width-schemeButtonWidth)
-        .attr("y", height-schemeButtonHeight)
+    svg.append("rect")
+        .attr("id", "schemeButton")
+        .attr("x", width-schemeButtonWidth)//function(d) {return +(d3.select("#legendArea").attr("x"))+50;})//Legend's g has no x or y attr
+        .attr("y", 0-schemeButtonHeight)//function(d) {return +(d3.select("#legendArea").attr("y"))+50;})//height-schemeButtonHeight)
         .attr("width", schemeButtonWidth)
         .attr("height", schemeButtonHeight)
         .style("fill", "#C0C0C0C0")
@@ -350,51 +371,45 @@ d3.json(inputFileName).then(function(data) {
         })
     ;
     //Text for the previous button
+    //TODO this isn't well centered. 
+    var textHeight = 12;
+    var textPadding = 5;
     svg.append("text")
         .text("Toggle color")
-        //Draw at the legend's x TODO
-        .attr("x", width-schemeButtonWidth)
-        //But down a bit depending on legend's height TODO
-        .attr("y", height-schemeButtonHeight)//function(d) {return +(d3.select("#circle3ec").attr("cy"))+textPadding;});
+        //Draw at box's x and y
+        .attr("x", function() {return +(d3.select("#schemeButton").attr("x"))+textPadding;})
+        .attr("y", function() {return +(d3.select("#schemeButton").attr("y"))+textHeight*1.5;})
         .on("click", function() {
             toggleColorScheme()
         })
-    
+    ;
     
     var buttonPadding = 10;
-    
     //Button to switch toggle tracts
-    var tractButtonWidth = 40;
+    var tractButtonWidth = 100;
     var tractButtonHeight = 30;
-    svg.append("g")
-        //.attr("class", "tractButton")
-        .append("rect")
-        .attr("x", width-tractButtonWidth)
-        .attr("y", height-tractButtonHeight-schemeButtonHeight-buttonPadding)
+    svg.append("rect")
+        .attr("id", "tractButton")
+        //Based on the last button
+        .attr("x", function() {return +(d3.select("#schemeButton").attr("x"))-tractButtonWidth-buttonPadding;})
+        .attr("y", function() {return +(d3.select("#schemeButton").attr("y"));})
         .attr("width", tractButtonWidth)
         .attr("height", tractButtonHeight)
         .style("fill", "#C0C0C0C0")
         .on("click", function() {
-            console.log("Toggling tract visibility");
-            //Based on https://stackoverflow.com/questions/19353331/getting-or-changing-css-class-property-with-javascript-using-dom-style
-            //TODO is this really the best way to do it? Can I just change the CSS class properties?
-            var elems = document.getElementsByClassName('tract');
-            if(tractsVisible){
-                for(let i = 0; i < elems.length; ++i){
-                    elems[i].style.visibility = 'hidden';
-                }
-            } else {
-                for(let i = 0; i < elems.length; ++i){
-                    elems[i].style.visibility = 'visible';
-                    //Lets make sure these lines show on top
-                    //That's not working, newly created stuff displays on top. Maybe just toggle visibility for those as well. 
-                    //elems[i].style["z-index"] = 100;
-                }
-            }
-            tractsVisible = !tractsVisible;
+            toggleTracts();
         })
     ;
-    
+    //Text for the previous button
+    svg.append("text")
+        .text("Toggle tracts")
+        //Draw at box's x and y
+        .attr("x", function() {return +(d3.select("#tractButton").attr("x"))+textPadding;})
+        .attr("y", function() {return +(d3.select("#tractButton").attr("y"))+textHeight*1.5;})
+        .on("click", function() {
+            toggleTracts();
+        })
+    ;
     
     //We'll need this data later for tooltip, etc
     MIdata = data;
