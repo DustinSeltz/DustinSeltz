@@ -66,7 +66,6 @@ function drawLegend(color){
             d = color.invertExtent(d);
             if (d[0] == null) d[0] = x.domain()[0];
             if (d[1] == null) d[1] = x.domain()[1];
-            console.log("after:color d=", d);
             return d;
         }))
         .enter().append("rect")
@@ -74,15 +73,6 @@ function drawLegend(color){
             .attr("x", function(d) { return x(d[0]); })
             .attr("width", function(d) { return x(d[1]) - x(d[0]); })
             .attr("fill", function(d) { return color(d[0]); });
-    //This is the legend's label
-    g.append("text")
-        .attr("class", "caption")
-        .attr("x", x.range()[0])
-        .attr("y", -6)
-        .attr("fill", "#000")
-        .attr("text-anchor", "start")
-        .attr("font-weight", "bold")
-        .text("Population per square mile");
     
     //I only want quantile for color2 scheme, not color1. 
     let domain;
@@ -93,12 +83,36 @@ function drawLegend(color){
     }
     
     //This is the legend's ticks, which are dividing the color bar and have number labels
-    g.call(d3.axisBottom(x)
+    let ticks = g.call(d3.axisBottom(x)
         .tickSize(13)
         .tickValues(domain)
-    )
-      .select(".domain") //Removes the x axis horizontal line
+    );
+    ticks.select(".domain") //Removes the x axis horizontal line
         .remove();
+    console.log("ticks=", ticks);
+    console.log("ticks text=", ticks.selectAll("text"));
+    //Quantile has low values overlapping if the text is horizontal
+    if(color === color2){
+        ticks.selectAll("text")
+            .attr("transform", "rotate(90)") //Rotate text
+            //Shift it down and left a little because rotate puts it off
+            //Unfortunately I don't see an easy way to do this dynamically. Eyeballing it.
+            //Also it just might not have enough room
+            //Looks like x and y are reversed? Because of rotation?
+            .attr("dx", "2em")
+            .attr("dy", "-1em")
+        ;
+    }
+    //By drawing this last it won't be rotated. 
+    //This is the legend's label
+    g.append("text")
+        .attr("class", "caption")
+        .attr("x", x.range()[0])
+        .attr("y", -6)
+        .attr("fill", "#000")
+        .attr("text-anchor", "start")
+        .attr("font-weight", "bold")
+        .text("Population per square mile");
 }
 drawLegend(color1);
 
