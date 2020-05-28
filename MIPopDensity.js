@@ -53,41 +53,43 @@ var x = d3.scaleSqrt()
     .domain([0, 4500])
     .rangeRound([440, 950]);
 
-var g = svg.append("g")
-    .attr("class", "key")
-    .attr("id", "legendArea")
-    .attr("transform", "translate(0,40)");
+function drawLegend(color){
+    var g = svg.append("g")
+        .attr("class", "key")
+        .attr("id", "legendArea")
+        .attr("transform", "translate(0,40)");
 
-//TODO so this is the legend, right? Coloring it. Will need to stick this in a function and re-generate it with new color, or access its pieces and recolor them.
-//This is the colored rectangles of the legend
-g.selectAll("rect")
-    .data(color1.range().map(function(d) { //TODO change color
-        d = color1.invertExtent(d);
-        if (d[0] == null) d[0] = x.domain()[0];
-        if (d[1] == null) d[1] = x.domain()[1];
-        return d;
-    }))
-    .enter().append("rect")
-        .attr("height", 8)
-        .attr("x", function(d) { return x(d[0]); })
-        .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-        .attr("fill", function(d) { return color1(d[0]); }); //TODO change color
-//This is the legend's label
-g.append("text")
-    .attr("class", "caption")
-    .attr("x", x.range()[0])
-    .attr("y", -6)
-    .attr("fill", "#000")
-    .attr("text-anchor", "start")
-    .attr("font-weight", "bold")
-    .text("Population per square mile");
-//This is the legend's ticks dividing the color bar, as well as the text for each tick
-g.call(d3.axisBottom(x)
-    .tickSize(13)
-    .tickValues(color1.domain())) //TODO change color
-  .select(".domain")
-    .remove();
-
+    //TODO so this is the legend, right? Coloring it. Will need to stick this in a function and re-generate it with new color, or access its pieces and recolor them.
+    //This is the colored rectangles of the legend
+    g.selectAll("rect")
+        .data(color.range().map(function(d) { //TODO change color
+            d = color.invertExtent(d);
+            if (d[0] == null) d[0] = x.domain()[0];
+            if (d[1] == null) d[1] = x.domain()[1];
+            return d;
+        }))
+        .enter().append("rect")
+            .attr("height", 8)
+            .attr("x", function(d) { return x(d[0]); })
+            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+            .attr("fill", function(d) { return color(d[0]); }); //TODO change color
+    //This is the legend's label
+    g.append("text")
+        .attr("class", "caption")
+        .attr("x", x.range()[0])
+        .attr("y", -6)
+        .attr("fill", "#000")
+        .attr("text-anchor", "start")
+        .attr("font-weight", "bold")
+        .text("Population per square mile");
+    //This is the legend's ticks dividing the color bar, as well as the text for each tick
+    g.call(d3.axisBottom(x)
+        .tickSize(13)
+        .tickValues(color.domain())) //TODO change color
+      .select(".domain")
+        .remove();
+}
+drawLegend(color1);
 
 //Get list of county FIPS in the data
 function getSource(data){
@@ -261,14 +263,19 @@ function toggleColorScheme(){
         let county = elems[i];
         county.style.fill = nextColorScheme(county.getAttribute("value"));
     }
+    //Remove old legend
+    d3.select("#legendArea").remove();
+    //Re-draw the legend for the new scheme
+    drawLegend(nextColorScheme);
+    
     //We're toggling between two schemes, invert. 
     if(nextColorScheme === color1){
         nextColorScheme = color2;
     } else {
         nextColorScheme = color1;
     }
-        
 }
+
 function toggleTracts(){
     console.log("Toggling tract visibility");
     //Based on https://stackoverflow.com/questions/19353331/getting-or-changing-css-class-property-with-javascript-using-dom-style
@@ -360,10 +367,9 @@ d3.json(inputFileName).then(function(data) {
     //Draws state
     svg.append("g")
         .selectAll("path")
-        //.data(topojson.feature(data, data.objects.tracts).features) //TODO what is 'tracts'?
-        .data(topojson.feature(data, data.objects.states).features) //TODO equivalent?
+        .data(topojson.feature(data, data.objects.states).features)
         .enter().append("path")
-            .attr("fill", function(d) { console.log("g d=", d); return "#C0C0C0"})//Assuming the counties draw, this shouldn't matter at all, it's just covered
+            .attr("fill", function() {return "none"})//Assuming the counties draw, this shouldn't matter at all, it's just covered
             .attr("d", path)
             .attr("stroke", "#000")
             .attr("stroke-width", 3)
@@ -394,7 +400,7 @@ d3.json(inputFileName).then(function(data) {
     var textHeight = 12;
     var textPadding = 5;
     svg.append("text")
-        .text("Toggle color")
+        .text("Toggle Color")
         //Draw at box's x and y
         .attr("x", function() {return +(d3.select("#schemeButton").attr("x"))+textPadding;})
         .attr("y", function() {return +(d3.select("#schemeButton").attr("y"))+textHeight*1.5;})
